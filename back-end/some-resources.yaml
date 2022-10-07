@@ -1,0 +1,338 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    # DynamoDBTable:
+    #     Type: "AWS::DynamoDB::Table"
+    #     Properties:
+    #         AttributeDefinitions: 
+    #           - 
+    #             AttributeName: "PK"
+    #             AttributeType: "N"
+    #         BillingMode: "PAY_PER_REQUEST"
+    #         TableName: "count-01"
+    #         KeySchema: 
+    #           - 
+    #             AttributeName: "PK"
+    #             KeyType: "HASH"
+
+    # S3Bucket:
+    #     Type: "AWS::S3::Bucket"
+    #     Properties:
+    #         BucketName: !Sub "${ApiGatewayV2Stage}.seanmlocke.com"
+    #         WebsiteConfiguration: 
+    #             IndexDocument: "index.html"
+
+    # S3BucketPolicy:
+    #     Type: "AWS::S3::BucketPolicy"
+    #     Properties:
+    #         Bucket: !Ref S3Bucket
+    #         PolicyDocument: 
+    #             Version: "2012-10-17"
+    #             Id: "MyPolicy"
+    #             Statement: 
+    #               - 
+    #                 Sid: "PublicReadForGetBucketObjects"
+    #                 Effect: "Allow"
+    #                 Principal: "*"
+    #                 Action: "s3:GetObject"
+    #                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+    #               - 
+    #                 Sid: "AllowCloudFrontServicePrincipalReadOnly"
+    #                 Effect: "Allow"
+    #                 Principal: 
+    #                     Service: "cloudfront.amazonaws.com"
+    #                 Action: "s3:GetObject"
+    #                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+    #                 Condition: 
+    #                     StringEquals: 
+    #                         "AWS:SourceArn": !Sub "arn:aws:cloudfront::304689260385:distribution/${CloudFrontDistribution}"
+    #               - 
+    #                 Sid: "3"
+    #                 Effect: "Allow"
+    #                 Principal: 
+    #                     AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontCloudFrontOriginAccessIdentity}"
+    #                 Action: "s3:GetObject"
+    #                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+    #               - 
+    #                 Sid: "4"
+    #                 Effect: "Allow"
+    #                 Principal: 
+    #                     AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontCloudFrontOriginAccessIdentity}"
+    #                 Action: "s3:GetObject"
+    #                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+    #               - 
+    #                 Sid: "5"
+    #                 Effect: "Allow"
+    #                 Principal: 
+    #                     AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontCloudFrontOriginAccessIdentity}"
+    #                 Action: "s3:GetObject"
+    #                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+
+    # CloudFrontDistribution:
+    #     Type: "AWS::CloudFront::Distribution"
+    #     Properties:
+    #         DistributionConfig: 
+    #             Aliases: 
+    #               - !Ref S3Bucket
+    #             Origins: 
+    #               - 
+    #                 ConnectionAttempts: 3
+    #                 ConnectionTimeout: 10
+    #                 DomainName: !Sub "${S3Bucket}.s3.${AWS::Region}.amazonaws.com"
+    #                 Id: !Sub "${S3Bucket}.s3-website-${AWS::Region}.amazonaws.com"
+    #                 OriginPath: ""
+    #                 S3OriginConfig: 
+    #                     OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontCloudFrontOriginAccessIdentity}"
+    #             DefaultCacheBehavior: 
+    #                 AllowedMethods: 
+    #                   - "HEAD"
+    #                   - "GET"
+    #                 CachedMethods: 
+    #                   - "HEAD"
+    #                   - "GET"
+    #                 Compress: true
+    #                 CachePolicyId: "dc4603b3-f0de-4a94-8f44-5cfb967e0d2f"
+    #                 OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
+    #                 ResponseHeadersPolicyId: "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
+    #                 SmoothStreaming: false
+    #                 TargetOriginId: !Sub "${S3Bucket}.s3-website-${AWS::Region}.amazonaws.com"
+    #                 ViewerProtocolPolicy: "redirect-to-https"
+    #             Comment: ""
+    #             PriceClass: "PriceClass_All"
+    #             Enabled: true
+    #             ViewerCertificate: 
+    #                 AcmCertificateArn: !Ref CertificateManagerCertificate
+    #                 CloudFrontDefaultCertificate: false
+    #                 MinimumProtocolVersion: "TLSv1.2_2021"
+    #                 SslSupportMethod: "sni-only"
+    #             Restrictions: 
+    #                 GeoRestriction: 
+    #                     RestrictionType: "none"
+    #             HttpVersion: "http2"
+    #             DefaultRootObject: "index.html"
+    #             IPV6Enabled: true
+
+    # CloudFrontCloudFrontOriginAccessIdentity:
+    #     Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    #     Properties:
+    #         CloudFrontOriginAccessIdentityConfig: 
+    #             Comment: !Sub "access-identity-${S3Bucket}.s3.${AWS::Region}.amazonaws.com"
+
+    # CloudFrontOriginAccessControl:
+    #     Type: "AWS::CloudFront::OriginAccessControl"
+    #     Properties:
+    #         OriginAccessControlConfig: 
+    #             Name: !Sub "cloudfront-oac-${ApiGatewayV2Stage}-bucket"
+    #             OriginAccessControlOriginType: "s3"
+    #             SigningBehavior: "always"
+    #             SigningProtocol: "sigv4"
+
+    # CloudFrontCachePolicy:
+    #     Type: "AWS::CloudFront::CachePolicy"
+    #     Properties:
+    #         CachePolicyConfig: 
+    #             Name: "ZeroTTL"
+    #             Comment: ""
+    #             DefaultTTL: 0
+    #             MaxTTL: 0
+    #             MinTTL: 0
+    #             ParametersInCacheKeyAndForwardedToOrigin: 
+    #                 EnableAcceptEncodingGzip: false
+    #                 EnableAcceptEncodingBrotli: false
+    #                 CookiesConfig: 
+    #                     CookieBehavior: "none"
+    #                 HeadersConfig: 
+    #                     HeaderBehavior: "none"
+    #                 QueryStringsConfig: 
+    #                     QueryStringBehavior: "none"
+
+    ApiGatewayV2Api:
+        Type: "AWS::ApiGatewayV2::Api"
+        Properties:
+            ApiKeySelectionExpression: "$request.header.x-api-key"
+            ProtocolType: "HTTP"
+            RouteSelectionExpression: "$request.method $request.path"
+            CorsConfiguration: 
+                AllowCredentials: false
+                AllowMethods: 
+                  - "GET"
+                  - "POST"
+                  - "OPTIONS"
+                AllowOrigins: 
+                  - !Sub "https://${S3Bucket}"
+                MaxAge: 0
+            DisableExecuteApiEndpoint: false
+
+    ApiGatewayV2Stage:
+        Type: "AWS::ApiGatewayV2::Stage"
+        Properties:
+            StageName: "dev"
+            StageVariables: {}
+            ApiId: "c4pnv7cd7a"
+            DeploymentId: "by6ji5"
+            RouteSettings: {}
+            DefaultRouteSettings: 
+                DetailedMetricsEnabled: false
+            AccessLogSettings: 
+                DestinationArn: !Sub "arn:aws:logs:${AWS::Region}:304689260385:log-group:count-api-log-group"
+                Format: "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\",\"routeKey\":\"$context.routeKey\", \"status\":\"$context.status\",\"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\" }"
+            AutoDeploy: false
+
+    ApiGatewayV2Route:
+        Type: "AWS::ApiGatewayV2::Route"
+        Properties:
+            ApiId: !Ref ApiGatewayV2Api
+            ApiKeyRequired: false
+            AuthorizationType: "NONE"
+            RequestParameters: {}
+            RouteKey: "POST /updateCount"
+            Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+    ApiGatewayV2Route2:
+        Type: "AWS::ApiGatewayV2::Route"
+        Properties:
+            ApiId: !Ref ApiGatewayV2Api
+            ApiKeyRequired: false
+            AuthorizationType: "NONE"
+            RouteKey: "OPTIONS /count"
+            Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+    ApiGatewayV2Route3:
+        Type: "AWS::ApiGatewayV2::Route"
+        Properties:
+            ApiId: !Ref ApiGatewayV2Api
+            ApiKeyRequired: false
+            AuthorizationType: "NONE"
+            RouteKey: "GET /count"
+            Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+    ApiGatewayV2Route4:
+        Type: "AWS::ApiGatewayV2::Route"
+        Properties:
+            ApiId: !Ref ApiGatewayV2Api
+            ApiKeyRequired: false
+            AuthorizationType: "NONE"
+            RouteKey: "GET /getCount"
+            Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+    ApiGatewayV2Route5:
+        Type: "AWS::ApiGatewayV2::Route"
+        Properties:
+            ApiId: !Ref ApiGatewayV2Api
+            ApiKeyRequired: false
+            AuthorizationType: "NONE"
+            RouteKey: "POST /count"
+            Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+    ApiGatewayV2Deployment:
+        Type: "AWS::ApiGatewayV2::Deployment"
+        Properties:
+            ApiId: !Ref ApiGatewayV2Api
+
+    ApiGatewayV2Integration:
+        Type: "AWS::ApiGatewayV2::Integration"
+        Properties:
+            ApiId: !Ref ApiGatewayV2Api
+            ConnectionType: "INTERNET"
+            IntegrationMethod: "POST"
+            IntegrationType: "AWS_PROXY"
+            IntegrationUri: !GetAtt LambdaFunction.Arn
+            TimeoutInMillis: 30000
+            PayloadFormatVersion: "2.0"
+
+    # CertificateManagerCertificate:
+    #     Type: "AWS::CertificateManager::Certificate"
+    #     Properties:
+    #         DomainName: !Ref S3Bucket
+    #         SubjectAlternativeNames: 
+    #           - !Ref S3Bucket
+    #         DomainValidationOptions: 
+    #           - 
+    #             DomainName: !Ref S3Bucket
+    #             ValidationDomain: !Ref S3Bucket
+    #         CertificateTransparencyLoggingPreference: "ENABLED"
+
+    LambdaFunction:
+        Type: "AWS::Lambda::Function"
+        Properties:
+            Description: ""
+            FunctionName: "Increment-o-nator"
+            Handler: "lambda_function.lambda_handler"
+            Architectures: 
+              - "x86_64"
+            Code: 
+                S3Bucket: "prod-iad-c1-djusa-tasks"
+                S3Key: "/snapshots/304689260385/Increment-o-nator-b33a21e4-c4ec-4db0-ae2f-9750ed146073"
+                S3ObjectVersion: "AtJ6yDbJ2yU8d4aXO5l43X1bvXP.wOP0"
+            MemorySize: 128
+            Role: "arn:aws:iam::304689260385:role/Lambda-DynamoDB"
+            Runtime: "python3.9"
+            Timeout: 3
+            TracingConfig: 
+                Mode: "PassThrough"
+            EphemeralStorage: 
+                Size: 512
+
+    LambdaPermission:
+        Type: "AWS::Lambda::Permission"
+        Properties:
+            Action: "lambda:InvokeFunction"
+            FunctionName: !GetAtt LambdaFunction.Arn
+            Principal: "apigateway.amazonaws.com"
+            SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:304689260385:lkoafkcvc4/*/GET/count"
+
+    # Route53HostedZone:
+    #     Type: "AWS::Route53::HostedZone"
+    #     Properties:
+    #         Name: !Sub "${S3Bucket}."
+
+    # Route53RecordSet:
+    #     Type: "AWS::Route53::RecordSet"
+    #     Properties:
+    #         Name: !Sub "${S3Bucket}."
+    #         Type: "A"
+    #         AliasTarget: 
+    #             HostedZoneId: "Z2FDTNDATAQYW2"
+    #             DNSName: !Sub "${CloudFrontDistribution.DomainName}."
+    #             EvaluateTargetHealth: false
+    #         HostedZoneId: !Ref Route53HostedZone
+
+    # Route53RecordSet2:
+    #     Type: "AWS::Route53::RecordSet"
+    #     Properties:
+    #         Name: !Sub "${S3Bucket}."
+    #         Type: "NS"
+    #         TTL: 172800
+    #         ResourceRecords: 
+    #           - "ns-295.awsdns-36.com."
+    #           - "ns-1855.awsdns-39.co.uk."
+    #           - "ns-1516.awsdns-61.org."
+    #           - "ns-597.awsdns-10.net."
+    #           - "ns-183.awsdns-22.com"
+    #           - "ns-1306.awsdns-35.org"
+    #           - "ns-1656.awsdns-15.co.uk"
+    #           - "ns-722.awsdns-26.net"
+    #         HostedZoneId: !Ref Route53HostedZone
+
+    # Route53RecordSet3:
+    #     Type: "AWS::Route53::RecordSet"
+    #     Properties:
+    #         Name: !Sub "${S3Bucket}."
+    #         Type: "SOA"
+    #         TTL: 900
+    #         ResourceRecords: 
+    #           - "ns-295.awsdns-36.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+    #         HostedZoneId: !Ref Route53HostedZone
+
+    # Route53RecordSet4:
+    #     Type: "AWS::Route53::RecordSet"
+    #     Properties:
+    #         Name: !Sub "_e7a5b4b8493d1660e7f103224ee68744.${S3Bucket}."
+    #         Type: "CNAME"
+    #         TTL: 300
+    #         ResourceRecords: 
+    #           - "_ffb2fecbb7ac2d0621a91720202c20f7.fpktwqqglf.acm-validations.aws."
+    #         HostedZoneId: !Ref Route53HostedZone
+

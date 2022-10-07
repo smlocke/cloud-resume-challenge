@@ -1,3 +1,5 @@
 
 back-end/count-function/package.json
 back-end/count-function/package-lock.json
+*.xml
+back-end/count-function/.idea/count-function.iml

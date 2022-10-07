@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Build Template for Cloud Resume Challenge
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Parameters:
+  # HostedZoneParameter:
+  #   Type: String
+  #   Description: The hosted zone for the Route53 records
+  DomainNameParameter:
+    Type: String
+    Description: The domain name of the site
+  ApiDomainNameParameter:
+    Type: String
+    Description: The subdomain of the API
+    Default: "api."
+  FunctionName:
+    Type: String
+    Description: What do you want to call the lambda counting function?
+    Default: "Increment-o-nator"
+  TableName:
+    Type: String
+    Description: What do you want to call your DynamoDB table?
+    Default: "count-01"
+  # WebsiteDomainNameParameter:
+  #   Type: String
+  #   Description: The subdomain of the API
+  #   Default: "website."
+
+Resources:
+# Establish publicly viewable S3 bucket and point to Index.html as Index doc
+  MyWebsite:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+      BucketName: !Sub "${ApiDomainNameParameter}.${DomainNameParameter}"
+
+# Create DynamoDB Table with necessary attributes to work correctly
+  MyDynamoDBTable:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+        TableName: TableName
+        BillingMode: "PAY_PER_REQUEST"
+        AttributeDefinitions: 
+          - AttributeName: "PK"
+            AttributeType: "N"
+        KeySchema: 
+          - AttributeName: "PK"
+            KeyType: "HASH"
+
+# Create new Route53 that points to CloudFront Distro as well as the root hosted zone
+# Honestly I'm not sure how to create some of these records without hardcoding things like nameservers or the CNAME
+  MyRoute53HostedZone:
+    Type: "AWS::Route53::HostedZone"
+    Properties:
+      Name: !Sub "${MyWebsite}."
+
+  MyRoute53RecordSet1:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      Name: !Sub "${MyWebsite}."
+      Type: "A"
+      AliasTarget: 
+          HostedZoneId: "Z2FDTNDATAQYW2"
+          DNSName: !Sub "${MyDistribution}."
+          EvaluateTargetHealth: false
+      HostedZoneId: !Ref MyRoute53HostedZone
+
+  MyRoute53RecordSet2:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+        Name: !Sub "${MyWebsite}."
+        Type: "NS"
+        TTL: 172800
+        ResourceRecords: 
+          - "ns-295.awsdns-36.com."
+          - "ns-1855.awsdns-39.co.uk."
+          - "ns-1516.awsdns-61.org."
+          - "ns-597.awsdns-10.net."
+          - "ns-183.awsdns-22.com"
+          - "ns-1306.awsdns-35.org"
+          - "ns-1656.awsdns-15.co.uk"
+          - "ns-722.awsdns-26.net"
+        HostedZoneId: !Ref MyRoute53HostedZone
+
+  MyRoute53RecordSet3:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+        Name: !Sub "${MyWebsite}."
+        Type: "SOA"
+        TTL: 900
+        ResourceRecords: 
+          - "ns-295.awsdns-36.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+        HostedZoneId: !Ref MyRoute53HostedZone
+      
+  MyRoute53RecordSet4:
+      Type: "AWS::Route53::RecordSet"
+      Properties:
+          Name: !Sub "_e7a5b4b8493d1660e7f103224ee68744.${MyWebsite}."
+          Type: "CNAME"
+          TTL: 300
+          ResourceRecords: 
+            - "_ffb2fecbb7ac2d0621a91720202c20f7.fpktwqqglf.acm-validations.aws."
+          HostedZoneId: !Ref MyRoute53HostedZone
+
+#Apply my SSL Certificate so that my custom domain allows HTTPS traffic  
+  MyCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+        DomainName: !Ref MyWebsite
+        SubjectAlternativeNames: 
+          - !Ref MyWebsite
+        DomainValidationOptions: 
+          - DomainName: !Ref MyWebsite
+            ValidationDomain: !Ref MyWebsite
+        CertificateTransparencyLoggingPreference: "ENABLED"
+
+# Establish Cloudfront Distro that routes traffic from custom domain to S3 Static Website with necessary settings
+  MyDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases: 
+          - !Ref MyWebsite
+        ViewerCertificate:
+          AcmCertificateArn: !Ref MyCertificate
+          SslSupportMethod: sni-only
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: "redirect-to-https"
+          TargetOriginId: !Sub "${MyWebsite}.s3-website-${AWS::Region}.amazonaws.com"
+          Compress: true
+          # CachePolicyId: "dc4603b3-f0de-4a94-8f44-5cfb967e0d2f"
+          CachePolicyId: !Ref MyCloudFrontCachePolicy
+          OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
+          ResponseHeadersPolicyId: "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
+          SmoothStreaming: false
+        Origins:
+          - ConnectionAttempts: 3
+            ConnectionTimeout: 10
+            DomainName: !Sub "${MyWebsite}.s3.${AWS::Region}.amazonaws.com"
+            Id: !Sub "${MyWebsite}.s3-website-${AWS::Region}.amazonaws.com"
+            OriginPath: ""
+            S3OriginConfig: 
+                OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${MyCloudFrontOriginAccessIdentity}"
+        Enabled: true
+        DefaultRootObject: index.html
+
+  MyCloudFrontOriginAccessIdentity:
+      Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+      Properties:
+          CloudFrontOriginAccessIdentityConfig: 
+              Comment: !Sub "access-identity-${MyWebsite}.s3.${AWS::Region}.amazonaws.com"
+
+  MyCloudFrontOriginAccessControl:
+      Type: "AWS::CloudFront::OriginAccessControl"
+      Properties:
+          OriginAccessControlConfig: 
+              Name: !Sub "cloudfront-oac-${ApiDomainNameParameter}-bucket"
+              OriginAccessControlOriginType: "s3"
+              SigningBehavior: "always"
+              SigningProtocol: "sigv4"
+
+  MyCloudFrontCachePolicy:
+      Type: "AWS::CloudFront::CachePolicy"
+      Properties:
+          CachePolicyConfig: 
+              Name: "ZeroTTL"
+              Comment: ""
+              DefaultTTL: 0
+              MaxTTL: 0
+              MinTTL: 0
+              ParametersInCacheKeyAndForwardedToOrigin: 
+                  EnableAcceptEncodingGzip: false
+                  EnableAcceptEncodingBrotli: false
+                  CookiesConfig: 
+                      CookieBehavior: "none"
+                  HeadersConfig: 
+                      HeaderBehavior: "none"
+                  QueryStringsConfig: 
+                      QueryStringBehavior: "none"
+
+# TKTK figure out the Lambda thing, whether SAM (Serverless::Function) or straight CF (Lambda::Function)? 
+# IF serverless, then discover CodeUri and how you'd get source code into that. Or if you can just paste the whole thing inline?
+# Create Get Lambda Function that pulls visitor count from my DynamoDB
+  MyFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: FunctionName
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: MyDynamoDBTable
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      InlineCode: |
+        # TKTKTK
+      Events:
+        GetFunction:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /get
+            Method: get
+
+#Create Put Function that increases viewer count on refresh and stores new number in my DynamoDB Table
+  PutFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: visitors
+      CodeUri: putFunction/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Events:
+        PutFunction:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /put
+            Method: get
+
+#Establish policy for my S3 Bucket that has it function as a Static Website  
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id: MyPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Join
+              - ""
+              - - "arn:aws:s3:::"
+                - !Ref MyWebsite
+                - /*
+      Bucket: !Ref MyWebsite
+
+# Various outputs
+# Outputs:
+#   BucketName:
+#     Description: The name of the bucket
+#     Value: !GetAtt MyWebsite.BucketName
+#     Condition: MyWebsite
