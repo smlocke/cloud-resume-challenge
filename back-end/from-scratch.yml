@@ -1,0 +1,367 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: An attempt to reverse-engineer the ClickOps mess of the dev environment. All CloudFormation, no SAM here.
+# Metadata:
+
+Parameters:
+  # HostedZoneParameter:
+  #   Type: String
+  #   Description: The hosted zone for the Route53 records
+  DomainNameParameter:
+    Type: String
+    Description: What's the domain name of the website?
+    Default: "example.com"
+  SubDomainNameParameter:
+    Type: String
+    Description: What subdomain/API stage are we playing with?
+    Default: "dev"
+  FunctionNameParameter:
+    Type: String
+    Description: What do you want to call the lambda counting function?
+    Default: "increment-o-nator"
+  TableNameParameter:
+    Type: String
+    Description: What do you want to call your DynamoDB table?
+    Default: "count-01"
+
+# Mappings: 
+
+# Conditions: 
+
+Resources:
+# Create public read-only S3 bucket and point to index.html
+  MyWebsite:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+      BucketName: !Sub "${SubDomainNameParameter}.${DomainNameParameter}"
+
+#Establish bucket policy to allow S3 bucket to function as public static website
+  BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+        Bucket: !Ref MyWebsite
+        PolicyDocument: 
+            Version: "2012-10-17"
+            Id: "MyPolicy"
+            Statement: 
+              - 
+                Sid: "PublicReadForGetBucketObjects"
+                Effect: "Allow"
+                Principal: "*"
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${MyWebsite}/*"
+              - 
+                Sid: "AllowCloudFrontServicePrincipalReadOnly"
+                Effect: "Allow"
+                Principal: 
+                    Service: "cloudfront.amazonaws.com"
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${MyWebsite}/*"
+                Condition: 
+                    StringEquals: 
+                        "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${MyDistribution}"
+              - 
+                Sid: "3"
+                Effect: "Allow"
+                Principal: 
+                    AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MyCloudFrontOriginAccessIdentity}"
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${MyWebsite}/*"
+              - 
+                Sid: "4"
+                Effect: "Allow"
+                Principal: 
+                    AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MyCloudFrontOriginAccessIdentity}"
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${MyWebsite}/*"
+              - 
+                Sid: "5"
+                Effect: "Allow"
+                Principal: 
+                    AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MyCloudFrontOriginAccessIdentity}"
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${MyWebsite}/*"
+
+# Create DynamoDB Table with necessary attributes to work correctly
+  MyDynamoDBTable:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+        TableName: !Ref TableNameParameter
+        BillingMode: "PAY_PER_REQUEST"
+        AttributeDefinitions: 
+          - AttributeName: "PK"
+            AttributeType: "N"
+        KeySchema: 
+          - AttributeName: "PK"
+            KeyType: "HASH"
+
+# Create new Route53 that points to CloudFront distribution as well as the root hosted zone
+# Honestly I'm not sure how to create some of these records without hardcoding things like nameservers or the CNAME
+  MyRoute53HostedZone:
+    Type: "AWS::Route53::HostedZone"
+    Properties:
+      Name: !Sub "${MyWebsite}."
+
+  MyRoute53RecordSet1:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      Name: !Sub "${MyWebsite}."
+      Type: "A"
+      AliasTarget: 
+          HostedZoneId: "Z2FDTNDATAQYW2"
+          DNSName: !Sub "${MyDistribution}."
+          EvaluateTargetHealth: false
+      HostedZoneId: !Ref MyRoute53HostedZone
+
+  MyRoute53RecordSet2:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+        Name: !Sub "${MyWebsite}."
+        Type: "NS"
+        TTL: 172800
+        ResourceRecords: 
+          - "ns-295.awsdns-36.com."
+          - "ns-1855.awsdns-39.co.uk."
+          - "ns-1516.awsdns-61.org."
+          - "ns-597.awsdns-10.net."
+          - "ns-183.awsdns-22.com"
+          - "ns-1306.awsdns-35.org"
+          - "ns-1656.awsdns-15.co.uk"
+          - "ns-722.awsdns-26.net"
+        HostedZoneId: !Ref MyRoute53HostedZone
+
+  MyRoute53RecordSet3:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+        Name: !Sub "${MyWebsite}."
+        Type: "SOA"
+        TTL: 900
+        ResourceRecords: 
+          - "ns-295.awsdns-36.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+        HostedZoneId: !Ref MyRoute53HostedZone
+      
+  MyRoute53RecordSet4:
+      Type: "AWS::Route53::RecordSet"
+      Properties:
+          Name: !Sub "_e7a5b4b8493d1660e7f103224ee68744.${MyWebsite}."
+          Type: "CNAME"
+          TTL: 300
+          ResourceRecords: 
+            - "_ffb2fecbb7ac2d0621a91720202c20f7.fpktwqqglf.acm-validations.aws."
+          HostedZoneId: !Ref MyRoute53HostedZone
+
+#Apply my SSL Certificate so that my custom domain allows HTTPS traffic  
+  MyCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+        DomainName: !Ref MyWebsite
+        SubjectAlternativeNames: 
+          - !Ref MyWebsite
+        DomainValidationOptions: 
+          - DomainName: !Ref MyWebsite
+            ValidationDomain: !Ref MyWebsite
+        CertificateTransparencyLoggingPreference: "ENABLED"
+
+# Establish Cloudfront Distro that routes traffic from custom domain to S3 Static Website with necessary settings
+  MyDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases: 
+          - !Ref MyWebsite
+        ViewerCertificate:
+          AcmCertificateArn: !Ref MyCertificate
+          SslSupportMethod: sni-only
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: "redirect-to-https"
+          TargetOriginId: !Sub "${MyWebsite}.s3-website-${AWS::Region}.amazonaws.com"
+          Compress: true
+          # CachePolicyId: "dc4603b3-f0de-4a94-8f44-5cfb967e0d2f"
+          CachePolicyId: !Ref MyCloudFrontCachePolicy
+          OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
+          ResponseHeadersPolicyId: "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
+          SmoothStreaming: false
+        Origins:
+          - ConnectionAttempts: 3
+            ConnectionTimeout: 10
+            DomainName: !Sub "${MyWebsite}.s3.${AWS::Region}.amazonaws.com"
+            Id: !Sub "${MyWebsite}.s3-website-${AWS::Region}.amazonaws.com"
+            OriginPath: ""
+            S3OriginConfig: 
+                OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${MyCloudFrontOriginAccessIdentity}"
+        Enabled: true
+        DefaultRootObject: index.html
+
+  MyCloudFrontOriginAccessIdentity:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties:
+        CloudFrontOriginAccessIdentityConfig: 
+            Comment: !Sub "access-identity-${MyWebsite}.s3.${AWS::Region}.amazonaws.com"
+
+  MyCloudFrontOriginAccessControl:
+    Type: "AWS::CloudFront::OriginAccessControl"
+    Properties:
+        OriginAccessControlConfig: 
+            Name: !Sub "cloudfront-oac-${SubDomainNameParameter}-bucket"
+            OriginAccessControlOriginType: "s3"
+            SigningBehavior: "always"
+            SigningProtocol: "sigv4"
+
+  MyCloudFrontCachePolicy:
+    Type: "AWS::CloudFront::CachePolicy"
+    Properties:
+          CachePolicyConfig: 
+              Name: "ZeroTTL"
+              Comment: ""
+              DefaultTTL: 0
+              MaxTTL: 0
+              MinTTL: 0
+              ParametersInCacheKeyAndForwardedToOrigin: 
+                  EnableAcceptEncodingGzip: false
+                  EnableAcceptEncodingBrotli: false
+                  CookiesConfig: 
+                      CookieBehavior: "none"
+                  HeadersConfig: 
+                      HeaderBehavior: "none"
+                  QueryStringsConfig: 
+                      QueryStringBehavior: "none"
+
+# A Lambda function (and associated permissions) with inline source code to count visitors to a website.
+  LambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: "A function to count visitors to a website."
+      Environment:
+        Variables:
+          table_name: !Ref MyDynamoDBTable
+      FunctionName: !Ref FunctionNameParameter
+      Handler: "lambda_function.lambda_handler"
+      Architectures: 
+        - "x86_64"
+      Code: 
+        ImageUri: /count-function
+      MemorySize: 128
+      Role: !Sub "arn:aws:iam::${AWS::AccountId}:role/Lambda-DynamoDB"
+      Runtime: "python3.9"
+      Timeout: 3
+      TracingConfig: 
+          Mode: "PassThrough"
+      EphemeralStorage: 
+          Size: 512
+
+  LambdaPermission:
+      Type: "AWS::Lambda::Permission"
+      Properties:
+          Action: "lambda:InvokeFunction"
+          FunctionName: !GetAtt LambdaFunction.Arn
+          Principal: "apigateway.amazonaws.com"
+          SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayV2Api}/*/GET/count"
+
+# Just cute little API things
+  ApiGatewayV2Api:
+      Type: "AWS::ApiGatewayV2::Api"
+      Properties:
+          ApiKeySelectionExpression: "$request.header.x-api-key"
+          ProtocolType: "HTTP"
+          RouteSelectionExpression: "$request.method $request.path"
+          CorsConfiguration: 
+              AllowCredentials: false
+              AllowMethods: 
+                - "GET"
+                - "POST"
+                - "OPTIONS"
+              AllowOrigins: 
+                - !Sub "https://${MyWebsite}"
+              MaxAge: 0
+          DisableExecuteApiEndpoint: false
+
+  ApiGatewayV2Stage:
+      Type: "AWS::ApiGatewayV2::Stage"
+      Properties:
+          StageName: !Ref SubDomainNameParameter
+          StageVariables: {}
+          ApiId: !Ref ApiGatewayV2Api
+          DeploymentId: !Ref ApiGatewayV2Deployment
+          RouteSettings: {}
+          DefaultRouteSettings: 
+              DetailedMetricsEnabled: false
+          AccessLogSettings: 
+              DestinationArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:count-api-log-group"
+              Format: "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\",\"routeKey\":\"$context.routeKey\", \"status\":\"$context.status\",\"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\" }"
+          AutoDeploy: false
+
+  ApiGatewayV2Route:
+      Type: "AWS::ApiGatewayV2::Route"
+      Properties:
+          ApiId: !Ref ApiGatewayV2Api
+          ApiKeyRequired: false
+          AuthorizationType: "NONE"
+          RequestParameters: {}
+          RouteKey: "POST /updateCount"
+          Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+  ApiGatewayV2Route2:
+      Type: "AWS::ApiGatewayV2::Route"
+      Properties:
+          ApiId: !Ref ApiGatewayV2Api
+          ApiKeyRequired: false
+          AuthorizationType: "NONE"
+          RouteKey: "OPTIONS /count"
+          Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+  ApiGatewayV2Route3:
+      Type: "AWS::ApiGatewayV2::Route"
+      Properties:
+          ApiId: !Ref ApiGatewayV2Api
+          ApiKeyRequired: false
+          AuthorizationType: "NONE"
+          RouteKey: "GET /count"
+          Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+  ApiGatewayV2Route4:
+      Type: "AWS::ApiGatewayV2::Route"
+      Properties:
+          ApiId: !Ref ApiGatewayV2Api
+          ApiKeyRequired: false
+          AuthorizationType: "NONE"
+          RouteKey: "GET /getCount"
+          Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+  ApiGatewayV2Route5:
+      Type: "AWS::ApiGatewayV2::Route"
+      Properties:
+          ApiId: !Ref ApiGatewayV2Api
+          ApiKeyRequired: false
+          AuthorizationType: "NONE"
+          RouteKey: "POST /count"
+          Target: !Sub "integrations/${ApiGatewayV2Integration}"
+
+  ApiGatewayV2Deployment:
+      Type: "AWS::ApiGatewayV2::Deployment"
+      Properties:
+          ApiId: !Ref ApiGatewayV2Api
+
+  ApiGatewayV2Integration:
+      Type: "AWS::ApiGatewayV2::Integration"
+      Properties:
+          ApiId: !Ref ApiGatewayV2Api
+          ConnectionType: "INTERNET"
+          IntegrationMethod: "POST"
+          IntegrationType: "AWS_PROXY"
+          IntegrationUri: !GetAtt LambdaFunction.Arn
+          TimeoutInMillis: 30000
+          PayloadFormatVersion: "2.0"
+
+
+
+
+# Various outputs
+# Outputs:
+#   BucketName:
+#     Description: The name of the bucket
+#     Value: !GetAtt MyWebsite.BucketName
+#     Condition: MyWebsite
