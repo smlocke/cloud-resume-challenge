@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "sam-i-am"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-vuy266e14zk0"
+s3_prefix = "sam-i-am"
+region = "us-east-1"
+profile = "aws-dev-20220821"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "DomainNameParameter=\"seanmlocke.com\" SubDomainNameParameter=\"dev2\" FunctionNameParameter=\"count-ha-ha\" TableNameParameter=\"count-02\""
+image_repositories = []

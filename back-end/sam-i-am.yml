@@ -51,28 +51,28 @@ Resources:
           TABLE_NAME: !Ref MyDynamoDBTable
       FunctionName: !Ref FunctionNameParameter
       Handler: "lambda_function.lambda_handler"
-      Code: 
-        CodeUri: /count-function
+      CodeUri: count-function/
       Policies:
         DynamoDBCrudPolicy:
           TableName: !Ref MyDynamoDBTable
       Runtime: "python3.9"
       Tracing: Active
       Events:
-        Apievent:
+        ApiEvent:
           Type: Api
           Properties:
             Path: /getCount
             Method: GET
-            RestApiID:
+            RestApiId:
               Ref: MyApiGateway
 
+# Maybe gotta change this to AWS::Serverless::HttpApi on account of how the lambda function is testing out.
   MyApiGateway:
     Type: "AWS::Serverless::Api"
     Properties:
       StageName: !Ref SubDomainNameParameter
       Cors:
-        AllowOrigin: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}"
+        AllowOrigin: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}'"
         AllowMethods: "'POST, GET, OPTIONS'"
 
 
