@@ -12,7 +12,7 @@ Globals:
 Parameters: 
   DomainNameParameter:
     Type: String
-    Description: What's the domain name of the website?
+    Description: What's the root domain name of the website?
     Default: "example.com"
   SubDomainNameParameter:
     Type: String
@@ -75,4 +75,10 @@ Resources:
         AllowOrigin: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}"
         AllowMethods: "'POST, GET, OPTIONS'"
 
-
+Outputs:
+  MyCountingAPI:
+    Description: "API Gateway endpoint URL for the counting function."
+    Value: !Sub "https://${MyApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainParameter}"
+  MyCountingFunction:
+    Description: "ARN of the counting function."
+    Value: !GetAtt MyLambdaFunction.arn
