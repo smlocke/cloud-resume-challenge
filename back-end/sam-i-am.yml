@@ -62,6 +62,7 @@ Resources:
           Type: Api
           Properties:
             Path: /getCount
+            Method: get
             # RestApiId:
             #   Ref: MyApiGateway
 
