@@ -18,7 +18,7 @@ table = dynamodb.Table(TABLE_NAME)
 # Function to update the count
 def updateCount():
     response = db_client.update_item(
-        TableName=table,
+        TableName=TABLE_NAME,
         Key={
             'PK': {'N': "0"}
         },

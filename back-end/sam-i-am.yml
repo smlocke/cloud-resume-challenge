@@ -63,8 +63,6 @@ Resources:
           Properties:
             Path: /getCount
             Method: get
-            # RestApiId:
-            #   Ref: MyApiGateway
 
 # Maybe gotta change this to AWS::Serverless::HttpApi on account of how the lambda function is testing out.
   MyApiGateway:
