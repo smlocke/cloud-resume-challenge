@@ -50,35 +50,36 @@ Resources:
         Variables:
           TABLE_NAME: !Ref MyDynamoDBTable
       FunctionName: !Ref FunctionNameParameter
-      Handler: "lambda_function.lambda_handler"
-      Code: 
-        CodeUri: /count-function
+      Handler: !Sub "${FunctionNameParameter}.lambda_handler"
+      CodeUri: count-function/
       Policies:
         DynamoDBCrudPolicy:
           TableName: !Ref MyDynamoDBTable
       Runtime: "python3.9"
       Tracing: Active
       Events:
-        Apievent:
+        ApiEvent:
           Type: Api
           Properties:
             Path: /getCount
             Method: GET
-            RestApiID:
-              Ref: MyApiGateway
+            # RestApiId:
+            #   Ref: MyApiGateway
 
   MyApiGateway:
-    Type: "AWS::Serverless::Api"
+    Type: "AWS::Serverless::HttpApi"
     Properties:
+      Description: "HTTP API that invokes the counting function."
       StageName: !Ref SubDomainNameParameter
-      Cors:
-        AllowOrigin: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}"
-        AllowMethods: "'POST, GET, OPTIONS'"
+      CorsConfiguration:
+        AllowOrigins: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}'"
+        AllowMethods: "'POST, GET, OPTIONS'" 
+
 
 Outputs:
   MyCountingAPI:
     Description: "API Gateway endpoint URL for the counting function."
-    Value: !Sub "https://${MyApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainParameter}"
+    Value: !Sub "https://${MyApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}"
   MyCountingFunction:
     Description: "ARN of the counting function."
-    Value: !GetAtt MyLambdaFunction.arn
+    Value: !GetAtt MyLambdaFunction.Arn
