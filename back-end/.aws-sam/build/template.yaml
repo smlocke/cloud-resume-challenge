@@ -11,7 +11,6 @@ Globals:
 Parameters:
   DomainNameParameter:
     Type: String
-
     Description: What's the root domain name of the website?
     Default: example.com
   SubDomainNameParameter:
@@ -53,7 +52,6 @@ Resources:
         Ref: FunctionNameParameter
       Handler:
         Fn::Sub: ${FunctionNameParameter}.lambda_handler
-
       CodeUri: MyLambdaFunction
       Policies:
         DynamoDBCrudPolicy:
@@ -66,8 +64,7 @@ Resources:
           Type: Api
           Properties:
             Path: /getCount
-            Method: GET
-
+            Method: get
     Metadata:
       SamResourceId: MyLambdaFunction
   MyApiGateway:
@@ -91,4 +88,3 @@ Outputs:
       Fn::GetAtt:
       - MyLambdaFunction
       - Arn
-

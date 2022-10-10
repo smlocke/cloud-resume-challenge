@@ -3,7 +3,7 @@ import boto3
 import os
 
 # DynamoDB table name
-table_name = os.environ.get["table_name"]
+table_name = os.environ.get("table_name")
 
 # Get the service resource
 dynamodb = boto3.resource('dynamodb')
