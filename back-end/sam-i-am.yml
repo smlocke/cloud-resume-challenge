@@ -48,7 +48,7 @@ Resources:
     Properties:
       Environment:
         Variables:
-          TABLE_NAME: !Ref MyDynamoDBTable
+          TABLE_NAME: !Ref TableNameParameter
       FunctionName: !Ref FunctionNameParameter
       Handler: !Sub "${FunctionNameParameter}.lambda_handler"
       CodeUri: count-function/
