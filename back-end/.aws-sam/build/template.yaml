@@ -47,7 +47,7 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME:
-            Ref: MyDynamoDBTable
+            Ref: TableNameParameter
       FunctionName:
         Ref: FunctionNameParameter
       Handler:

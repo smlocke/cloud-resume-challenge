@@ -3,7 +3,7 @@ import boto3
 import os
 
 # DynamoDB table name
-table_name = os.environ.get("table_name")
+TABLE_NAME = os.environ.get("TABLE_NAME")
 
 # Get the service resource
 dynamodb = boto3.resource('dynamodb')
@@ -12,13 +12,13 @@ dynamodb = boto3.resource('dynamodb')
 db_client = boto3.client('dynamodb')
 
 # Resource representing an Amazon DynamoDB Table
-table = dynamodb.Table(table_name)
+table = dynamodb.Table(TABLE_NAME)
 
 
 # Function to update the count
 def updateCount():
     response = db_client.update_item(
-        TableName=table_name,
+        TableName=table,
         Key={
             'PK': {'N': "0"}
         },
