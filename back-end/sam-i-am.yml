@@ -30,7 +30,7 @@ Parameters:
 Resources: 
   MyDynamoDBTable:
     Type: "AWS::DynamoDB::Table"
-    DeletionPolicy: Retain
+    DeletionPolicy: Delete
     UpdateReplacePolicy: Retain
     Properties:
         TableName: !Ref TableNameParameter
@@ -64,7 +64,7 @@ Resources:
             Path: /getCount
             Method: get
 
-# Maybe gotta change this to AWS::Serverless::HttpApi on account of how the lambda function is testing out.
+# Edit this some more. It's somehow creating a REST and an HTTP API, and the function is triggering on the REST one. Also nothing put-related. Sort it out
   MyApiGateway:
     Type: "AWS::Serverless::HttpApi"
     Properties:
@@ -81,3 +81,4 @@ Outputs:
   MyCountingFunction:
     Description: "ARN of the counting function."
     Value: !GetAtt MyLambdaFunction.Arn
+#
