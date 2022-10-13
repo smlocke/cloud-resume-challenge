@@ -59,26 +59,25 @@ Resources:
       Tracing: Active
       Events:
         ApiEvent:
-          Type: Api
+          Type: HttpApi
           Properties:
-            Path: /getCount
-            Method: get
+            Path: /count
+            Method: GET
 
-# Edit this some more. It's somehow creating a REST and an HTTP API, and the function is triggering on the REST one. Also nothing put-related. Sort it out
-  MyApiGateway:
-    Type: "AWS::Serverless::HttpApi"
-    Properties:
-      Description: "HTTP API that invokes the counting function."
-      StageName: !Ref SubDomainNameParameter
-      CorsConfiguration:
-        AllowOrigins: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}'"
-        AllowMethods: "'POST, GET, OPTIONS'" 
+# Might not need this after all
+#   MyApiGateway:
+#     Type: "AWS::Serverless::HttpApi"
+#     Properties:
+#       Description: "HTTP API that invokes the counting function."
+#       StageName: !Ref SubDomainNameParameter
+#       CorsConfiguration:
+#         AllowOrigins: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}'"
+#         AllowMethods: "'POST, GET, OPTIONS'" 
 
 Outputs:
   MyCountingAPI:
     Description: "API Gateway endpoint URL for the counting function."
-    Value: !Sub "https://${MyApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}"
   MyCountingFunction:
     Description: "ARN of the counting function."
     Value: !GetAtt MyLambdaFunction.Arn
-#
