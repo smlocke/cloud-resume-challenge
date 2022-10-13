@@ -59,20 +59,10 @@ Resources:
       Tracing: Active
       Events:
         ApiEvent:
-          Type: Api
+          Type: HttpApi 
           Properties:
-            Path: /getCount
-            Method: get
-
-# Edit this some more. It's somehow creating a REST and an HTTP API, and the function is triggering on the REST one. Also nothing put-related. Sort it out
-  MyApiGateway:
-    Type: "AWS::Serverless::HttpApi"
-    Properties:
-      Description: "HTTP API that invokes the counting function."
-      StageName: !Ref SubDomainNameParameter
-      CorsConfiguration:
-        AllowOrigins: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}'"
-        AllowMethods: "'POST, GET, OPTIONS'" 
+            Path: /count
+            Method: GET
 
 Outputs:
   MyCountingAPI:
