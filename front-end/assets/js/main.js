@@ -2,27 +2,20 @@ const countEl = document.getElementById('count');
 
 updateVisitCount();
 
+// New and hot in-development API URL
 function updateVisitCount() {
-  fetch('https://c4pnv7cd7a.execute-api.us-east-1.amazonaws.com/dev/count')
+  fetch('https://m09vq18et5.execute-api.us-east-1.amazonaws.com/dev2/count')
     .then(res => res.json())
     .then(res => {
         countEl.innerHTML = res;
   });
 }
 
-
-
-//     .then((data) => {
-//         document.getElementById('count').innerText = data.count
-//          })
-// }
-
-
-
+// // Old, known-good API URL
 // function updateVisitCount() {
-//   fetch('https://u9ef363qq1.execute-api.us-east-1.amazonaws.com/Prod/visitor/')
-//   .then(res => res.json())
-//   .then(res => {
-//     countEl.innerHTML = res;
+//   fetch('https://c4pnv7cd7a.execute-api.us-east-1.amazonaws.com/dev/count')
+//     .then(res => res.json())
+//     .then(res => {
+//         countEl.innerHTML = res;
 //   });
 // }
