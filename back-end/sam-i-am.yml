@@ -61,6 +61,8 @@ Resources:
         ApiEvent:
           Type: HttpApi 
           Properties:
+            StageName: !Ref SubDomainNameParameter
+            ApiId: !Sub "${SubDomainNameParameter}-${FunctionNameParameter}"
             Path: /count
             Method: GET
 

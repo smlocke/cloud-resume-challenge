@@ -28,7 +28,7 @@ Parameters:
 Resources:
   MyDynamoDBTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
+    DeletionPolicy: Delete
     UpdateReplacePolicy: Retain
     Properties:
       TableName:
@@ -61,27 +61,17 @@ Resources:
       Tracing: Active
       Events:
         ApiEvent:
-          Type: Api
+          Type: HttpApi
           Properties:
-            Path: /getCount
-            Method: get
+            Path: /count
+            Method: GET
     Metadata:
       SamResourceId: MyLambdaFunction
-  MyApiGateway:
-    Type: AWS::Serverless::HttpApi
-    Properties:
-      Description: HTTP API that invokes the counting function.
-      StageName:
-        Ref: SubDomainNameParameter
-      CorsConfiguration:
-        AllowOrigins:
-          Fn::Sub: '''${SubDomainNameParameter}.${DomainNameParameter}'''
-        AllowMethods: '''POST, GET, OPTIONS'''
 Outputs:
   MyCountingAPI:
     Description: API Gateway endpoint URL for the counting function.
     Value:
-      Fn::Sub: https://${MyApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}
+      Fn::Sub: https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}
   MyCountingFunction:
     Description: ARN of the counting function.
     Value:
