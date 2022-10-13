@@ -46,5 +46,6 @@ def lambda_handler(event, context):
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': '*'
-        }
+        },
+        "body": "congrats, you did it",
     }

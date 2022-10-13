@@ -59,20 +59,10 @@ Resources:
       Tracing: Active
       Events:
         ApiEvent:
-          Type: HttpApi
+          Type: HttpApi 
           Properties:
             Path: /count
             Method: GET
-
-# Might not need this after all
-#   MyApiGateway:
-#     Type: "AWS::Serverless::HttpApi"
-#     Properties:
-#       Description: "HTTP API that invokes the counting function."
-#       StageName: !Ref SubDomainNameParameter
-#       CorsConfiguration:
-#         AllowOrigins: !Sub "'${SubDomainNameParameter}.${DomainNameParameter}'"
-#         AllowMethods: "'POST, GET, OPTIONS'" 
 
 Outputs:
   MyCountingAPI:
