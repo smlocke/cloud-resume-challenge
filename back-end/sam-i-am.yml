@@ -61,15 +61,26 @@ Resources:
         ApiEvent:
           Type: HttpApi 
           Properties:
-            StageName: !Ref SubDomainNameParameter
-            ApiId: !Sub "${SubDomainNameParameter}-${FunctionNameParameter}"
+            ApiId: !Ref MyServerlessHttpApi
             Path: /count
             Method: GET
+
+  MyServerlessHttpApi: #let's define the http api here and reference it in the previous ApiEvent
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: "API to invoke counting function."
+      StageName: !Ref SubDomainNameParameter
+      CorsConfiguration:
+        AllowOrigins:
+        - !Sub "'https://${SubDomainNameParameter}.${DomainNameParameter}'"
+        AllowMethods:
+        - GET, POST, OPTIONS
+        MaxAge: 600     
 
 Outputs:
   MyCountingAPI:
     Description: "API Gateway endpoint URL for the counting function."
-    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}"
+    Value: !Sub "https://${MyServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}"
   MyCountingFunction:
     Description: "ARN of the counting function."
     Value: !GetAtt MyLambdaFunction.Arn
