@@ -65,17 +65,19 @@ Resources:
             Path: /count
             Method: GET
 
-  MyServerlessHttpApi: #let's define the http api here and reference it in the previous ApiEvent
+  MyServerlessHttpApi: 
     Type: AWS::Serverless::HttpApi
     Properties:
-      Description: "API to invoke counting function."
+      Description: API to invoke counting function.
       StageName: !Ref SubDomainNameParameter
       CorsConfiguration:
-        AllowOrigins:
-        - !Sub "'https://${SubDomainNameParameter}.${DomainNameParameter}'"
-        AllowMethods:
-        - GET, POST, OPTIONS
-        MaxAge: 600     
+        AllowOrigins: 
+          - "https://dev.seanmlocke.com"
+        AllowMethods: 
+          - GET
+          - POST
+          - OPTIONS
+        MaxAge: 600
 
 Outputs:
   MyCountingAPI:
