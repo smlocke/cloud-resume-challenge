@@ -40,12 +40,13 @@ def getCount():
 
 def lambda_handler(event, context):
     updateCount()
-    return getCount(), {
+    count = getCount()
+    return {
         "statusCode": 200,
         'headers': {
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': '*'
         },
-        "body": "congrats, you did it",
+        "body": {"count": count},
     }

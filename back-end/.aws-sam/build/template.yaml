@@ -63,15 +63,31 @@ Resources:
         ApiEvent:
           Type: HttpApi
           Properties:
+            ApiId:
+              Ref: MyServerlessHttpApi
             Path: /count
             Method: GET
     Metadata:
       SamResourceId: MyLambdaFunction
+  MyServerlessHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: API to invoke counting function.
+      StageName:
+        Ref: SubDomainNameParameter
+      CorsConfiguration:
+        AllowOrigins:
+        - https://dev.seanmlocke.com
+        AllowMethods:
+        - GET
+        - POST
+        - OPTIONS
+        MaxAge: 600
 Outputs:
   MyCountingAPI:
     Description: API Gateway endpoint URL for the counting function.
     Value:
-      Fn::Sub: https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}
+      Fn::Sub: https://${MyServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${SubDomainNameParameter}
   MyCountingFunction:
     Description: ARN of the counting function.
     Value:
