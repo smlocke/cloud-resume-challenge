@@ -2,4 +2,10 @@
 back-end/count-function/package.json
 back-end/count-function/package-lock.json
 *.xml
-back-end/count-function/.idea/count-function.iml
+back-end/count-function/.idea/
+back-end/count-function/venv/
+back-end/cloud-resume-challenge/
+back-end/from-scratch.yml
+back-end/minimum-viable-template.yaml
+back-end/some-resources.yaml
+
